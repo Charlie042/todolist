@@ -4,6 +4,8 @@ use std::io::Error;
 use std::fs::write;
 use std::io::Read;
 use std::str::FromStr;
+
+use serde_json::map;
 struct Todo{
     map:HashMap<String,bool>
 
@@ -15,18 +17,15 @@ impl Todo{
     }
 
 
-    fn save (self)-> Result<(), Error>{
-        let mut content = String::new();
-
-        for (k,v) in self.map{
-
-            let record = format!("{}\t{}\n", k,v);
-
-            content.push_str(&record);
-    
-        }
-        write("db.txt", content)
-        
+        fn save(self) -> Result<(), Box<dyn std::error::Error>> {
+            // open db.json
+            let f = std::fs::OpenOptions::new()
+                .write(true)
+                .create(true)
+                .open("db.json")?;
+            // write to file with serde
+            serde_json::to_writer_pretty(f, &self.map)?;
+            Ok(())
     }
 
     fn new()-> Result<Todo, Error>{
@@ -34,8 +33,9 @@ impl Todo{
        .write(true)
        .create(true)
        .read(true)
-       .open("db.txt")?;
+       .open("db.json")?;
 
+       
         let mut content = String::new();
 
         f.read_to_string(&mut content)?;
@@ -45,9 +45,17 @@ impl Todo{
         .map(|(k,v)| (String::from(k), bool::from_str(v).unwrap()))
         .collect();
 
-            Ok(Todo { map})
+          
+            match serde_json::from_reader(f) {
+                Ok(map) => Ok(Todo { map }),
+                Err(e) if e.is_eof() => Ok(Todo {
+                    map: HashMap::new(),
+                }),
+                Err(e) => panic!("An error occurred: {}", e),
+        
 
     }
+}
 
     fn complete(&mut self,key: &String)-> Option<()>{
         match self.map.get_mut(key) {
@@ -88,6 +96,6 @@ fn main(){
             }
 
         }
-
+    
 
 
