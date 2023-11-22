@@ -1,11 +1,6 @@
-use std::env::{self, args};
+use std::env::{ args};
 use std::collections::HashMap;
 use std::io::Error;
-use std::fs::write;
-use std::io::Read;
-use std::str::FromStr;
-
-use serde_json::map;
 struct Todo{
     map:HashMap<String,bool>
 
@@ -29,21 +24,12 @@ impl Todo{
     }
 
     fn new()-> Result<Todo, Error>{
-       let mut f = std::fs::OpenOptions::new()
+       let  f = std::fs::OpenOptions::new()
        .write(true)
        .create(true)
        .read(true)
        .open("db.json")?;
 
-       
-        let mut content = String::new();
-
-        f.read_to_string(&mut content)?;
-        let map:HashMap<String,bool> = content.lines()
-        .map(|x|x.splitn(2, '\t').collect::<Vec<&str>>())
-        .map(|v|(v[0],v[1]))
-        .map(|(k,v)| (String::from(k), bool::from_str(v).unwrap()))
-        .collect();
 
           
             match serde_json::from_reader(f) {
